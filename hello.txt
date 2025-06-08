@@ -1,0 +1,3 @@
+Hello from txt!
+# only print 1 line
+# use '\n' because '\0' is hard to type
