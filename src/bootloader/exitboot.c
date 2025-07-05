@@ -1,5 +1,7 @@
 #include "exitboot.h"
 
+EFI_MEMORY_DESCRIPTOR *mem_map;
+UINT64 MemMapCount, MemMapDescSize;
 
 UINTN GetMapKey() {
     EFI_STATUS status;
@@ -12,9 +14,11 @@ UINTN GetMapKey() {
         Err(L"[ERROR] GetMemoryMap (size query) failed.\r\n");
     }
 
-    MapSize += DescSize * 8;
+    MemMapCount = MapSize / DescSize;
+    MemMapDescSize = DescSize;
 
-    EFI_MEMORY_DESCRIPTOR *mem_map = (EFI_MEMORY_DESCRIPTOR*) Allocate(MapSize);
+    MapSize += DescSize * 8;
+    mem_map = (EFI_MEMORY_DESCRIPTOR*) Allocate(MapSize);
     if (!mem_map){
         Err(L"[ERROR] Failed to allocate memory map.\r\n");
     }
@@ -23,6 +27,20 @@ UINTN GetMapKey() {
     if (EFI_ERROR(status)){
         Err(L"[ERROR] GetMemoryMap (actual) failed.\r\n");
     }
+
+    // Will Change Memory Map
+    // for (int i=0; i < MemMapCount; i++){
+    //     EFI_MEMORY_DESCRIPTOR* desc = (EFI_MEMORY_DESCRIPTOR*)((UINT8*)mem_map + (i*DescSize));
+    //     if (desc->Type == 7){
+    //         PutStr(L"[MEM] Type: ");
+    //         PrintDec(desc->Type);
+    //         PutStr(L", Start: ");
+    //         PrintHex(desc->PhysicalStart);
+    //         PutStr(L", Pages: ");
+    //         PrintHex(desc->NumberOfPages);
+    //         PutStr(L"\r\n");
+    //     }
+    // }
 
     return MapKey;
 }

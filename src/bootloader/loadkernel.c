@@ -31,13 +31,9 @@ KERNEL_ENTRY LoadKernel(void *KernelBuffer) {
         PrintHex(addr);
         PutStr(L", pages=");
         PrintDec(num_pages);
+        PutStr(L" ... ");
 
-        if (IsPageAllocated(addr, num_pages)){
-            PutStr(L" ... Skipped.\r\n");
-        } else {
-            PutStr(L"\r\n");
-            AllocatePagesAt(addr, num_pages);
-        }
+        TryAllocPagesAt(addr, num_pages);
 
         BS->CopyMem(dest, src, ph->p_filesz);
 

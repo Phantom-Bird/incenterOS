@@ -1,8 +1,13 @@
 build/
 inc/
-build/
 .idea/
 .vscode/settings.json
 
 utils/text_image_generator/*
 !utils/text_image_generator/main.py
+
+utils/font_decoder/*
+!utils/font_decoder/main.py
+
+src/kernel/.rb/
+*.log

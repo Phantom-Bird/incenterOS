@@ -10,7 +10,7 @@ void Err(CHAR16 *e){
 
 void ErrStatus(CHAR16 *e, EFI_STATUS status){
     PutStr(e);
-    PutStr("[ERROR] Status: ");
+    PutStr(L"[ERROR] Status: ");
     PrintHex(status);
     while (1){
         __asm__ volatile ("hlt");

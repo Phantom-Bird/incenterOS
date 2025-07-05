@@ -1,4 +1,6 @@
-char *logo =
+const int logo_size = 128;
+
+const char *logo =
 "                                                                                                                                \n"
 "                                                                                                                                \n"
 "                                                                                                                                \n"

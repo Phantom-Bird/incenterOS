@@ -6,10 +6,14 @@
 // 这个故事告诉我们抄代码一定要抄对
 // 花了我半天。
 
+#ifdef BOOTLOADER
 EFI_GRAPHICS_OUTPUT_PROTOCOL *GOP;
-UINT32 ScreenWidth=-1, ScreenHeight=-1;
+#endif
+UINT32 ScreenWidth=-1, ScreenHeight=-1, Pitch;
 UINT32 *fb;
+UINT32 FBSize;
 
+#ifdef BOOTLOADER
 void InitGOP(){
     EFI_GUID GopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
     EFI_STATUS status = BS->LocateProtocol(
@@ -23,7 +27,18 @@ void InitGOP(){
 
     ScreenWidth = GOP->Mode->Info->HorizontalResolution;
     ScreenHeight = GOP->Mode->Info->VerticalResolution;
+    Pitch = GOP->Mode->Info->PixelsPerScanLine;
     fb = (UINT32*) GOP->Mode->FrameBufferBase;
+    FBSize = GOP->Mode->FrameBufferSize;
+}
+#endif
+
+void InitGOPFrom(GraphicsInfo gi){
+    fb = gi.framebuffer;
+    ScreenWidth = gi.width;
+    ScreenHeight = gi.height;
+    FBSize = gi.size_bytes;
+    Pitch = gi.pitch;
 }
 
 void DrawPixel(UINT32 x, UINT32 y, PIXEL color){
@@ -31,7 +46,7 @@ void DrawPixel(UINT32 x, UINT32 y, PIXEL color){
         return;
     }
 
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL *pixel = &fb[y * ScreenWidth + x];
+    EFI_GRAPHICS_OUTPUT_BLT_PIXEL *pixel = &fb[y * Pitch + x];
     pixel->Blue = color.Blue;
     pixel->Green = color.Green;
     pixel->Red = color.Red;
@@ -62,6 +77,10 @@ void DrawTextImage(CHAR8 *Image, PIXEL *ColorMap, UINT32 Unit,
         }
         x += Unit;
     }
+}
+
+void ClearScreen(){
+    DrawRect(0, 0, ScreenWidth-1, ScreenHeight-1, (PIXEL){0, 0, 0, 255});
 }
 
 // EFI_STATUS DrawBMP(BMP* bmp_data, UINT32 start_x, UINT32 start_y) {

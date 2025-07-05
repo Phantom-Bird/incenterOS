@@ -1,12 +1,95 @@
-#define UINTN unsigned long long int
+// 在 bootloader 中，为了和 UEFI 统一，使用了驼峰命名法
+// 在此处就换回来了。
 
-UINTN kernel_main(UINTN, UINTN);
+#include "../shared/bootinfo.h"
+#include "gop.h"
+#include "../shared/graphics/logo.h"
+#include "pmm_alloc.h"
+#include "print.h"
+#include "gdt.h"
+#include "idt.h"
+#include "isr.h"
+#include "paging.h"
+#include "kmalloc.h"
 
-__attribute__ ((ms_abi))
-UINTN kernel_entry(UINTN a, UINTN b) {
-    return kernel_main(a, b);
+#define MB 0x100000
+#define KERNEL_VIRT 0xffff800000000000
+#define FB_VIRT     0xffff900000000000
+
+void kernel_main();
+
+BootInfo boot_info;
+
+void kernel_entry(BootInfo *bi) {
+    boot_info = *bi;
+    kernel_main();
 }
 
-UINTN kernel_main(UINTN a, UINTN b){
-    return a + b;
+void init_paging();
+
+void kernel_main(){
+    if (boot_info.magic != MAGIC){
+        while (1){
+            __asm__ volatile ("hlt");
+        }
+    }
+
+    InitGOPFrom(boot_info.graphics);
+    ClearScreen();
+    set_scaling(1, 2);
+
+    __asm__ volatile ("cli");
+
+    print("[KERNEL] Initalizing GDT...\n");
+    init_gdt();
+    reload_segments();
+
+    print("[KERNEL] Initializing IDT...\n");
+    init_isr();
+    init_idt();
+
+    __asm__ volatile ("sti");
+    __asm__ volatile ("int $0x80; int $0xFF;");
+    volatile int x=0;
+    x = 1/x;
+
+    print("[KERNEL] Initializing physical memory allocater...\n");
+    pmm_init(boot_info.mem.mem_map,
+             boot_info.mem.count,
+             boot_info.mem.desc_size);
+    
+    print("[KERNEL] Initializing paging...\n");
+    paging_set_root();
+    init_paging();
+    print("[KERNEL] Loading page table...\n");
+    set_cr3();
+    print("[KERNEL] Now kernel runs at 0xffff800000000000!\n");
+
+    print("[KERNEL] logo of incenterOS -> \n");
+
+    PIXEL color_map[256] = {['@'] = (PIXEL){255, 255, 255, 255}, ['R'] = (PIXEL){0, 0, 255, 255}};
+    int unit = 4;
+    DrawTextImage(
+        logo, color_map, unit, 
+        (ScreenWidth-logo_size*unit)/2, 
+        (ScreenHeight-logo_size*unit)/2);
+
+    raise_err("[ERROR] Wolf is coming!");
+
+    while (1){
+        __asm__ volatile ("hlt");
+    }
 }
+
+void init_paging(){
+    // 内核
+    map_pages(0, 32*MB, 0, PRESENT | WRITABLE);  // 恒等
+    map_pages(KERNEL_VIRT, 32*MB, 0, PRESENT | WRITABLE);  // 高地址
+
+    // 帧缓冲区
+    uint64_t fb_base = (uint64_t)(boot_info.graphics.framebuffer);
+    uint64_t fb_size = boot_info.graphics.size_bytes;  // BI 新增项目
+    map_pages(fb_base, fb_size, fb_base, PRESENT | WRITABLE);
+    map_pages(FB_VIRT, fb_size, fb_base, PRESENT | WRITABLE);
+}
+

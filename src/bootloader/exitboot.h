@@ -3,7 +3,10 @@
 #include <efilib.h>
 #include "alloc.h"
 #include "err.h"
+#include "output.h"
 
+extern EFI_MEMORY_DESCRIPTOR *mem_map;
+extern UINT64 MemMapCount, MemMapDescSize;
 
 UINTN GetMapKey();
 

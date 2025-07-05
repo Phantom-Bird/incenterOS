@@ -9,17 +9,9 @@
 #include "gop.h"
 #include "../shared/graphics/logo.h"
 
-
 EFI_SYSTEM_TABLE *ST;
 EFI_BOOT_SERVICES *BS;
-
-CHAR8 *Image = 
-    "#  #  ####  #     #     ####    @@@@  @@@@  @@@@  \n"
-    "#  #  #     #     #     #  #    @     @  @  @  @  \n"
-    "####  ####  #     #     #  #    @     @  @  @@@@  \n"
-    "#  #  #     #     #     #  #    @  @  @  @  @     \n"
-    "#  #  ####  ####  ####  ####    @@@@  @@@@  @     \n";
-PIXEL Map[256];
+BootInfo BI;
 
 EFI_STATUS EFIAPI 
 efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
@@ -39,25 +31,43 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
     PutStr(L"[BOOT] Locating GOP...\r\n");
     InitGOP();
-    Map['#'] = (PIXEL){73, 86, 228, 255};
-    Map['@'] = (PIXEL){254, 220, 156, 255};
-    DrawTextImage(Image, Map, 10, 256, 256);
-    Map['@'] = (PIXEL){255, 255, 255, 255};
-    Map['R'] = (PIXEL){0, 0, 255, 255};
-    DrawTextImage(logo, Map, 2, 0, 64);
 
-    // UINTN MapKey = GetMapKey();
-    // ExitBootDevices(ImageHandle, MapKey);
+    PutStr(L"[BOOT] Allocating stack...\r\n");
+    const UINTN 
+        M = 0x100000,
+        KernelStackSize = 0x8000,
+        KernelStackPages = KernelStackSize / PageSize,
+        KernelStackBase = 24*M,
+        KernelStackTop = KernelStackBase + KernelStackSize;
+    AllocatePagesAt(KernelStackBase, KernelStackPages);
 
-    // PutStr(L"123 + 456 = ");
-    // PrintDec(KernelEntry(123, 456));
+    PutStr(L"[BOOT] Exiting boot...\r\n");
+    UINTN MapKey = GetMapKey();
+    ExitBootDevices(ImageHandle, MapKey);
+
+    BI.magic = MAGIC;
+    BI.graphics.framebuffer = fb;
+    BI.graphics.width = ScreenWidth;
+    BI.graphics.height = ScreenHeight;
+    BI.graphics.size_bytes = FBSize;
+    BI.graphics.pitch = Pitch;
+    BI.stack.base_addr = KernelStackBase;
+    BI.stack.size = KernelStackSize;
+    BI.mem.mem_map = mem_map;
+    BI.mem.count = MemMapCount;
+    BI.mem.desc_size = MemMapDescSize;
+
+    __asm__ volatile (
+        "mov %[stack], %%rsp\n"
+        "mov %[info], %%rdi\n"
+        "jmp *%[entry]\n"
+        :
+        : [stack] "r"(KernelStackTop), 
+          [info] "r"(&BI),
+          [entry] "r"(KernelEntry)
+    );
     
     // 至此，永不返回。
-
-    while (1)   {
-        __asm__ volatile ("hlt");
-    }
-    
 
     return EFI_SUCCESS;
 }
