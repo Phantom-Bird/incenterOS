@@ -23,6 +23,13 @@ void handle_exception_with_err_code(uint8_t vec, SavedRegistersWithError* const 
     print_hex(regs->rsp);
     print("\nERR: ");
     print_hex(regs->err_code);
+
+    if (vec == 0xE){
+        uint64_t cr2;
+        __asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
+        print("\nCR2: ");
+        print_hex(cr2);
+    }
     raise_err("");
 }
 
@@ -41,6 +48,6 @@ void init_isr(){
     for (int i=0; i<32; i++){
         isr[i] = (ISR)handle_exception_without_err_code;
     }
-    isr[8] = isr[10] = isr[11] = isr[12] = 
-             isr[13] = isr[14] = isr[17] = (ISR)handle_exception_with_err_code;
+    isr[8] = isr[10] = isr[11] = isr[12]
+           = isr[13] = isr[14] = isr[17] = (ISR)handle_exception_with_err_code;
 }

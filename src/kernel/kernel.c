@@ -11,6 +11,9 @@
 #include "isr.h"
 #include "paging.h"
 #include "kmalloc.h"
+#include "apic.h"
+#include "timer.h"
+#include "keyboard.h"
 
 #define MB 0x100000
 #define KERNEL_VIRT 0xffff800000000000
@@ -48,11 +51,6 @@ void kernel_main(){
     init_isr();
     init_idt();
 
-    __asm__ volatile ("sti");
-    __asm__ volatile ("int $0x80; int $0xFF;");
-    volatile int x=0;
-    x = 1/x;
-
     print("[KERNEL] Initializing physical memory allocater...\n");
     pmm_init(boot_info.mem.mem_map,
              boot_info.mem.count,
@@ -63,7 +61,13 @@ void kernel_main(){
     init_paging();
     print("[KERNEL] Loading page table...\n");
     set_cr3();
-    print("[KERNEL] Now kernel runs at 0xffff800000000000!\n");
+    print("[KERNEL] Now kernel runs at 0xFFFF800000000000!\n");
+    
+    apic_enable();
+    init_timer();
+    init_keyboard();
+    
+    __asm__ volatile ("sti");
 
     print("[KERNEL] logo of incenterOS -> \n");
 
@@ -74,7 +78,7 @@ void kernel_main(){
         (ScreenWidth-logo_size*unit)/2, 
         (ScreenHeight-logo_size*unit)/2);
 
-    raise_err("[ERROR] Wolf is coming!");
+    // raise_err("[ERROR] Wolf is coming!");
 
     while (1){
         __asm__ volatile ("hlt");
@@ -91,5 +95,9 @@ void init_paging(){
     uint64_t fb_size = boot_info.graphics.size_bytes;  // BI 新增项目
     map_pages(fb_base, fb_size, fb_base, PRESENT | WRITABLE);
     map_pages(FB_VIRT, fb_size, fb_base, PRESENT | WRITABLE);
+
+    // APIC MMIO
+    map_pages(APIC_DEFAULT_BASE, 0x1000, APIC_DEFAULT_BASE, PRESENT | WRITABLE);
+    map_pages(IOAPIC_DEFAULT_BASE, 0x1000, IOAPIC_DEFAULT_BASE, PRESENT | WRITABLE);
 }
 

@@ -51,7 +51,6 @@ void map_page(uint64_t virt, uint64_t phys, uint64_t flags) {
 
 void map_pages(uint64_t virt_start, size_t bytes, uint64_t phys_start, uint64_t flags){
     for (uint64_t off=0; off < bytes; off += PAGE_SIZE){
-        // print("mapping...\n");
         map_page(virt_start + off, phys_start + off, flags);
     }
 }

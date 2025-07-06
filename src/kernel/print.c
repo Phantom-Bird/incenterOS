@@ -40,14 +40,21 @@ PIXEL fg_color = {255, 255, 255, 255},
       bg_color = {0};
 
 void putchar(char c) {
-        if (c == '\n') {
+    if (c == '\n') {
         cursor_x = PADDING;
         cursor_y += LINE_HEIGHT;
         return;
     }
-
-    putchar_at(c, cursor_x, cursor_y, fg_color, bg_color);
-    cursor_x += w_scaled;
+    if (c == '\r'){
+        cursor_x = PADDING;
+        return;
+    }
+    if (c == 8/*BS*/){
+        if (cursor_x >= PADDING + w_scaled){
+            cursor_x -= w_scaled;
+        }
+        return;
+    }
 
     if (cursor_y + LINE_HEIGHT > ScreenHeight - PADDING) {
         cursor_x = PADDING;
@@ -57,6 +64,9 @@ void putchar(char c) {
         cursor_x = PADDING;
         cursor_y += LINE_HEIGHT;
     }
+
+    putchar_at(c, cursor_x, cursor_y, fg_color, bg_color);
+    cursor_x += w_scaled;
 }
 
 void print(char *s) {

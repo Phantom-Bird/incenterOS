@@ -9,7 +9,7 @@ void isr_common(int vec, void* const saved_registers){
     }
 
     warning_color();
-    print("[WARNING] int ");
+    print("[WARNING] Unhandled int ");
     print_hex(vec);
     print(", saved registers at ");
     print_hex((uint64_t) saved_registers);
