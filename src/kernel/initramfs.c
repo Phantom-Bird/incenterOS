@@ -4,6 +4,7 @@
 #include "mem.h"
 #include "print.h"
 #include "pool.h"
+#include "hash.h"
 
 #define INITRAMFS_POOL_VIRT      0xFFFF800000000000
 #define INITRAMFS_POOL_MAX       (1 << 30) // 1GB
@@ -12,7 +13,7 @@
 FSItem *fs_root;
 LargePool fs_pool;
 
-static inline FSItem* new_item(FSItem *parent){    
+static inline FSItem* new_item(FSItem *parent, uint64_t bucket){    
     FSItem *item = pool_alloc(&fs_pool, sizeof(FSItem));
 
     if (!item){
@@ -21,27 +22,34 @@ static inline FSItem* new_item(FSItem *parent){
 
     memset(item, 0, sizeof(FSItem));
     item->parent = parent;
-    item->next = parent->first_child;
-    parent->first_child = item;
+    item->bucket = bucket;
+
+    if (!parent){
+        return item;
+    }
+
+    item->next = parent->first_child[bucket];
+    parent->first_child[bucket] = item;
 
     return item;
 }
 
 void initramfs_init(){
     fs_pool = create_pool(INITRAMFS_POOL_VIRT, INITRAMFS_POOL_INIT_SIZE, INITRAMFS_POOL_MAX);
-    fs_root = new_item(NULL);
+    fs_root = new_item(NULL, 0);
 }
 
-FSItem* find_child(FSItem *parent, const char *name){
-    if (strcmp(name, ".") == 0){
+FSItem* find_child(FSItem *parent, const char *name_with_delim){
+    if (strcmp(name_with_delim, ".") == 0){
         return parent;
     }
-    if (strcmp(name, "..") == 0){
+    if (strcmp(name_with_delim, "..") == 0){
         return parent->parent;
     }
 
-    for (FSItem *child = parent->first_child; child; child = child->next){
-        if (__strcmp_before(child->name, name, '/') == 0){
+    for (FSItem *child = parent->first_child[__hash_string_mod_before(name_with_delim, HASH_BUCKETS, '/')]; 
+            child; child = child->next){
+        if (__strcmp_before(child->name, name_with_delim, '/') == 0){
             return child;
         }
     }
@@ -59,7 +67,7 @@ FSItem* insert_child(FSItem *parent, const char *name, CPIOHeader *hdr, void *fi
     uint64_t file_size = hex_to_uint(hdr->filesize, 8);
     uint64_t mode = hex_to_uint(hdr->mode, 8);
 
-    child = new_item(parent);
+    child = new_item(parent, hash_string_mod(name, HASH_BUCKETS));
     child->flags |= (mode & MODE_DIR)? ITEM_DIR : 0;
     child->flags |= (mode & MODE_FILE)? ITEM_FILE : 0;
     child->name = pool_alloc_copy(&fs_pool, strlen(name)+1, name);

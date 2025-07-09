@@ -78,7 +78,9 @@ void kernel_main(){
     if (!file_info){
         raise_err("[ERROR] Kernel was caught 0721ing!");
     }
+    print("=== file ===\n");
     print(file_info->file_data);
+    print("\n============\n");
 
     print("[KERNEL] logo of incenterOS -> \n");
 
