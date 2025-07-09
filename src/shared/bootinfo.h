@@ -25,8 +25,14 @@ typedef struct {
 } MemMapInfo;
 
 typedef struct {
+    uint64_t start;
+    uint64_t size;
+} InitrdInfo;
+
+typedef struct {
     uint64_t magic;
     GraphicsInfo graphics;
     StackInfo stack;
     MemMapInfo mem;
+    InitrdInfo initrd;
 } BootInfo;

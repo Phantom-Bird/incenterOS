@@ -51,7 +51,7 @@ UINT64 FileSize(EFI_FILE_HANDLE FileHandle) {
     return size;
 }
 
-void* ReadFile(EFI_FILE_HANDLE Volume, CHAR16 *Path) {
+void* ReadFile(EFI_FILE_HANDLE Volume, CHAR16 *Path, UINT64 *outSize) {
     EFI_FILE_HANDLE FileHandle;
     uefi_call_wrapper(Volume->Open, 5, Volume, &FileHandle, Path, EFI_FILE_MODE_READ, 0);
 
@@ -60,6 +60,10 @@ void* ReadFile(EFI_FILE_HANDLE Volume, CHAR16 *Path) {
     uefi_call_wrapper(FileHandle->Read, 3, FileHandle, &ReadSize, Buffer);
 
     uefi_call_wrapper(FileHandle->Close, 1, FileHandle);
+
+    if (outSize != NULL){
+        *outSize = ReadSize;
+    }
 
     return Buffer;
 }

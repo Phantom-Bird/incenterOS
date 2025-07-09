@@ -16,7 +16,7 @@ void init_lapic_timer() {
     apic_write(LAPIC_REG_TIMER, LAPIC_TIMER_VECTOR | LAPIC_TIMER_MODE_PERIODIC); // 中断向量: 0x20, 模式: 周期性
     apic_write(LAPIC_REG_TIMER_INIT, 64e4);  // // 设置初始计数器（在 QEMU 下刚好为 10ms）
 
-    print("[LAPIC] Local APIC Timer initialized\n");
+    print("[KERNEL] Local APIC Timer initialized\n");
 }
 
 int64_t time=0;

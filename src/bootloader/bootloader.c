@@ -23,7 +23,7 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
     EFI_FILE_HANDLE Volume = GetVolume(ImageHandle);
     PutStr(L"[BOOT] Reading kernel...\r\n");
-    void *KernelBuffer = ReadFile(Volume, L"\\kernel.elf");
+    void *KernelBuffer = ReadFile(Volume, L"\\kernel.elf", NULL);
     PutStr(L"[BOOT] Loading kernel...\r\n");
     KERNEL_ENTRY KernelEntry = LoadKernel(KernelBuffer);
     PutStr(L"[BOOT] Loaded kernel.\r\n");
@@ -41,6 +41,10 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         KernelStackTop = KernelStackBase + KernelStackSize;
     AllocatePagesAt(KernelStackBase, KernelStackPages);
 
+    PutStr(L"[BOOT] Loading initrd...\r\n");
+    UINT64 InitRDSize;
+    void *InitRDStart = ReadFile(Volume, L"\\initrd.img", &InitRDSize);
+
     PutStr(L"[BOOT] Exiting boot...\r\n");
     UINTN MapKey = GetMapKey();
     ExitBootDevices(ImageHandle, MapKey);
@@ -56,6 +60,8 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     BI.mem.mem_map = mem_map;
     BI.mem.count = MemMapCount;
     BI.mem.desc_size = MemMapDescSize;
+    BI.initrd.start = (EFI_PHYSICAL_ADDRESS)InitRDStart;
+    BI.initrd.size = InitRDSize;
 
     __asm__ volatile (
         "mov %[stack], %%rsp\n"

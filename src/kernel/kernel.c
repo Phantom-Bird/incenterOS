@@ -10,10 +10,10 @@
 #include "idt.h"
 #include "isr.h"
 #include "paging.h"
-#include "kmalloc.h"
 #include "apic.h"
 #include "timer.h"
 #include "keyboard.h"
+#include "cpio.h"
 
 #define MB 0x100000
 #define KERNEL_VIRT 0xffff800000000000
@@ -69,6 +69,8 @@ void kernel_main(){
     
     __asm__ volatile ("sti");
 
+    cpio_init((void*)boot_info.initrd.start, boot_info.initrd.size);
+
     print("[KERNEL] logo of incenterOS -> \n");
 
     PIXEL color_map[256] = {['@'] = (PIXEL){255, 255, 255, 255}, ['R'] = (PIXEL){0, 0, 255, 255}};
@@ -89,6 +91,7 @@ void init_paging(){
     // 内核
     map_pages(0, 32*MB, 0, PRESENT | WRITABLE);  // 恒等
     map_pages(KERNEL_VIRT, 32*MB, 0, PRESENT | WRITABLE);  // 高地址
+    // 已经包括栈
 
     // 帧缓冲区
     uint64_t fb_base = (uint64_t)(boot_info.graphics.framebuffer);
@@ -99,5 +102,11 @@ void init_paging(){
     // APIC MMIO
     map_pages(APIC_DEFAULT_BASE, 0x1000, APIC_DEFAULT_BASE, PRESENT | WRITABLE);
     map_pages(IOAPIC_DEFAULT_BASE, 0x1000, IOAPIC_DEFAULT_BASE, PRESENT | WRITABLE);
+
+    // initrd
+    map_pages(boot_info.initrd.start, 
+              boot_info.initrd.size, 
+              boot_info.initrd.start,
+              PRESENT | WRITABLE);
 }
 

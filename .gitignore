@@ -9,5 +9,5 @@ utils/text_image_generator/*
 utils/font_decoder/*
 !utils/font_decoder/main.py
 
-src/kernel/.rb/
+**/.rb/
 *.log

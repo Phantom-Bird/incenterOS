@@ -17,7 +17,7 @@ void apic_enable() {
     // Enable APIC in SVR
     apic_write(APIC_SVR, 0xFF | APIC_ENABLE);
 
-    print("[APIC] Local APIC enabled at 0xFEE00000\n");
+    print("[KERNEL] Local APIC enabled at 0xFEE00000\n");
 }
 
 
@@ -30,5 +30,5 @@ void ioapic_redirect_irq(uint8_t irq, uint8_t vector, uint8_t apic_id/*CPU*/) {
     ioapic_write(index + 1, high); // high dword: APIC ID
     ioapic_write(index, low);      // low dword: vector & flags(0)
 
-    print("[IOAPIC] IRQ "); print_dec(irq); print(" -> vector "); print_dec(vector); print(" mapped to APIC ID "); print_dec(apic_id); print("\n");
+    print("[KERNEL] IRQ "); print_dec(irq); print(" -> vector "); print_dec(vector); print(" mapped to APIC ID "); print_dec(apic_id); print("\n");
 }

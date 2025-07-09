@@ -49,7 +49,7 @@ void putchar(char c) {
         cursor_x = PADDING;
         return;
     }
-    if (c == 8/*BS*/){
+    if (c == '\b'){
         if (cursor_x >= PADDING + w_scaled){
             cursor_x -= w_scaled;
         }
