@@ -14,6 +14,7 @@
 #include "timer.h"
 #include "keyboard.h"
 #include "cpio.h"
+#include "initramfs.h"
 
 #define MB 0x100000
 #define KERNEL_VIRT 0xffff800000000000
@@ -69,7 +70,15 @@ void kernel_main(){
     
     __asm__ volatile ("sti");
 
+    print("[KERNEL] Loading initrd...\n");
     cpio_init((void*)boot_info.initrd.start, boot_info.initrd.size);
+    
+    print("[KERNEL]\n");
+    FSItem *file_info = initramfs_find(NULL, "/dir/ciallo.txt");
+    if (!file_info){
+        raise_err("[ERROR] Kernel was caught 0721ing!");
+    }
+    print(file_info->file_data);
 
     print("[KERNEL] logo of incenterOS -> \n");
 
@@ -79,8 +88,6 @@ void kernel_main(){
         logo, color_map, unit, 
         (ScreenWidth-logo_size*unit)/2, 
         (ScreenHeight-logo_size*unit)/2);
-
-    // raise_err("[ERROR] Wolf is coming!");
 
     while (1){
         __asm__ volatile ("hlt");

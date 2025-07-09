@@ -19,7 +19,7 @@ typedef struct FSItem {
     struct FSItem *next;
     
     uint64_t file_size;
-    void *file_addr;
+    void *file_data;
 } FSItem;
 
 // 全局根节点
@@ -27,4 +27,4 @@ extern FSItem *fs_root;
 
 void initramfs_init();
 FSItem* initramfs_find(FSItem *work_dir, const char *path);
-FSItem* initramfs_create(FSItem *work_dir, const char *path, CPIOHeader *hdr, void *file_addr);
+FSItem* initramfs_create(FSItem *work_dir, const char *path, CPIOHeader *hdr, void *file_data);

@@ -12,4 +12,4 @@ int strcmp(const char *a, const char *b);
 uint64_t strlen(const char *str);
 char* strchr(const char *str, char c);
 char* strrchr(const char *str, char c);
-int __strcmp_before(const char *a, const char *b, char end);
+int __strcmp_before(const char *a, const char *b, char delim);

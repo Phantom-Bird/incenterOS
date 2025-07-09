@@ -17,25 +17,21 @@ uint32_t hex_to_uint(const char *str, uint64_t max_len) {
 
 int strncmp(const char *a, const char *b, uint64_t n){
     for (uint64_t i=0; i<n; i++){
-        if (a[i] < b[i]){
-            return -1;
-        } else if (a[i] > b[i]){
-            return 1;
+        if (a[i] != b[i]){
+            return a[i] - b[i];
         }
     }
     return 0;
 }
 
 int strcmp(const char *a, const char *b){
-    for (uint64_t i=0;; i++){
-        if (a[i] < b[i]){
-            return -1;
-        } else if (a[i] > b[i]){
-            return 1;
-        } else if (!a[i]){
-            return 0;
+    while (*a && *b) {
+        if (*a != *b) {
+            return *a - *b;
         }
+        a++; b++;
     }
+    return *a - *b;
 }
 
 uint64_t strlen(const char *str){
@@ -65,14 +61,19 @@ char* strrchr(const char *str, char c){
     return 0;
 }
 
-int __strcmp_before(const char *a, const char *b, char end){
-    for (uint64_t i=0;; i++){
-        if (a[i] < b[i]){
-            return -1;
-        } else if (a[i] > b[i]){
-            return 1;
-        } else if (!a[i] || a[i] == end){
-            return 0;
+// 文件名专用
+
+static inline uint8_t __is0or(char c, char e){
+    return !c || c == e;
+}
+
+int __strcmp_before(const char *a, const char *b, char delim) {
+    while (*a && *b && *a != delim && *b != delim) {
+        if (*a != *b) {
+            return *a - *b;
         }
+        a++; b++;
     }
+
+    return (*a == delim || *a == '\0') - (*b == delim || *b == '\0');
 }

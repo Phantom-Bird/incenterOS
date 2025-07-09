@@ -47,22 +47,15 @@ void cpio_init(void *archive, uint64_t cpio_size) {
         
         // 文件数据位置（对齐 4B）
         void *filedata = next_pos(filename, namesize);
-        
-        print("[KERNEL] CPIO: \"");
-        print(filename);
-        print("\", size=");
-        print_dec(filesize);
-        print(" at ");
-        print_hex((uint64_t)filedata);
-        print("\n");
 
-        if (filesize){
-            print("[FILE] === content ===\n");
-            print((char*)filedata);
-            print("\n[FILE] === end content ===\n");
+        FSItem *result = initramfs_create(fs_root, filename, header, filedata);
+        if (!result){
+            error_color();
+            print("[ERROR] cannot create file \"");
+            print(filename);
+            print("\"!");
+            raise_err("");
         }
-
-        initramfs_create(fs_root, filename, header, filedata);
         
         // 下一个文件位置（对齐 4B）
         header = (CPIOHeader*)next_pos(filedata, filesize);
