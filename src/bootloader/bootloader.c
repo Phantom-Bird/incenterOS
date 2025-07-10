@@ -61,7 +61,7 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     BI.mem.count = MemMapCount;
     BI.mem.desc_size = MemMapDescSize;
     BI.initrd.start = (EFI_PHYSICAL_ADDRESS)InitRDStart;
-    BI.initrd.size = InitRDSize;
+    BI.initrd.size = InitRDSize;    
 
     __asm__ volatile (
         "mov %[stack], %%rsp\n"

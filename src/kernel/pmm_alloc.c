@@ -6,8 +6,9 @@
 uint8_t page_bitmap[MAX_PAGE_COUNT / 8];  // 是否被占用（不可用或已分配）
 uint8_t page_available[MAX_PAGE_COUNT / 8];  // 是否可用
 size_t total_pages;
+size_t phys_mem_size;
 
-void pmm_init(const EFI_MEMORY_DESCRIPTOR *mem_map, 
+void pmm_init(const EFI_MEMORY_DESCRIPTOR * const mem_map, 
               size_t count, size_t desc_size){
     total_pages = 0;
     memset(page_bitmap, 0xFF, sizeof page_bitmap);
@@ -16,6 +17,11 @@ void pmm_init(const EFI_MEMORY_DESCRIPTOR *mem_map,
     for (size_t i=0; i < count; i++){
         const EFI_MEMORY_DESCRIPTOR *desc = 
             (const EFI_MEMORY_DESCRIPTOR*) ((uint8_t*)mem_map + i * desc_size);
+
+        size_t end =  desc->VirtualStart + desc->NumberOfPages * PAGE_SIZE;
+        if (end > phys_mem_size){
+            phys_mem_size = end;
+        }
 
         if (desc->Type != EfiConventionalMemory){
             continue;
@@ -38,7 +44,7 @@ void pmm_init(const EFI_MEMORY_DESCRIPTOR *mem_map,
 
 static size_t last_pos = 0;
 
-void* alloc_page(){
+PhysicalAddress alloc_page(){
     // print("pmm_alloc_page called...\n");
     for (size_t i = last_pos; i < MAX_PAGE_COUNT; i++){
         // print("!\n");
@@ -46,13 +52,13 @@ void* alloc_page(){
             // print(".\n");
             set_bit(page_bitmap, i);
             last_pos = i + 1;
-            return (void*) (i * PAGE_SIZE);
+            return i * PAGE_SIZE;
         }
     }
-    return NULL;
+    return 0;
 }
 
-void free_page(size_t addr){
+void free_page(PhysicalAddress addr){
     size_t idx = addr / PAGE_SIZE;
     if (idx >= MAX_PAGE_COUNT){
         return;

@@ -4,6 +4,7 @@
 #include "../shared/bootinfo.h"
 #include "gop.h"
 #include "../shared/graphics/logo.h"
+#include "mem.h"
 #include "pmm_alloc.h"
 #include "print.h"
 #include "gdt.h"
@@ -98,7 +99,7 @@ void kernel_main(){
 
 void init_paging(){
     // 内核
-    map_pages(0, 32*MB, 0, PRESENT | WRITABLE);  // 恒等
+    map_pages(0, 256*MB, 0, PRESENT | WRITABLE);  // 恒等
     map_pages(KERNEL_VIRT, 32*MB, 0, PRESENT | WRITABLE);  // 高地址
     // 已经包括栈
 

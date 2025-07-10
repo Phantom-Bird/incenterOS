@@ -16,23 +16,25 @@
 
 PageTable kernel_pml4;  // 内核页表根
 
-PageTable alloc_table(){
-    PageTable page = (PageTable) alloc_page();
-    if (!page) {
+PhysicalAddress alloc_table(){
+    PhysicalAddress page_phys = alloc_page();
+    if (!page_phys) {
         raise_err("[ERROR] Cannot alloc new page!");
     }
 
+    PageTable page = (PageTable) phys2virt(page_phys);
     memset(page, 0, PAGE_SIZE);
-    return page;
+
+    return page_phys;
 }
 
 PageTable get_or_alloc_table_of(PageTableEntry* entry, uint64_t flags) {
     if (!(entry->present)) {
-        void *table = alloc_table();
-        entry->value = ((uint64_t)table) | flags;
+        PhysicalAddress table_phys = alloc_table();
+        entry->value = table_phys | flags;
     }
     
-    return (uint64_t*)(entry->value & ~(PAGE_SIZE-1));
+    return (uint64_t*) phys2virt(entry->value & ~(PAGE_SIZE-1));
 }
 
 void map_page(uint64_t virt, uint64_t phys, uint64_t flags) {
@@ -56,7 +58,7 @@ void map_pages(uint64_t virt_start, size_t bytes, uint64_t phys_start, uint64_t 
 }
 
 void paging_set_root(){
-    kernel_pml4 = alloc_table();
+    kernel_pml4 = phys2virt(alloc_table());
     if (!kernel_pml4){
         raise_err("[ERROR] Cannot alloc PML4 table.");
     }

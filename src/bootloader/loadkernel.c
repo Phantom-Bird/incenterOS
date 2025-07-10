@@ -25,14 +25,6 @@ KERNEL_ENTRY LoadKernel(void *KernelBuffer) {
         EFI_PHYSICAL_ADDRESS addr = ph->p_vaddr & ~PageMask;
         UINTN num_pages = (ph->p_memsz + PageSize-1) / PageSize;
 
-        PutStr(L"[KERNEL] Loading segment ");
-        PrintDec(i);
-        PutStr(L", allocate: addr=");
-        PrintHex(addr);
-        PutStr(L", pages=");
-        PrintDec(num_pages);
-        PutStr(L" ... ");
-
         TryAllocPagesAt(addr, num_pages);
 
         BS->CopyMem(dest, src, ph->p_filesz);
