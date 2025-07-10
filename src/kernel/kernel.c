@@ -17,7 +17,7 @@
 #include "cpio.h"
 #include "initramfs.h"
 
-#define MB 0x100000
+#define MB 0x100000ull
 #define KERNEL_VIRT 0xffff800000000000
 #define FB_VIRT     0xffff900000000000
 
