@@ -30,7 +30,7 @@ void kernel_entry(BootInfo *bi) {
     kernel_main();
 }
 
-void init_paging();
+void init_kernel_paging();
 
 void kernel_main(){
     if (boot_info.magic != MAGIC){
@@ -40,10 +40,13 @@ void kernel_main(){
     }
 
     paging_load_root(boot_info.pml4_phys);
+    // init_kernel_paging();
 
     InitGOPFrom(boot_info.graphics);
     ClearScreen();
     set_scaling(1, 2);
+
+    // print("[KERNEL] Successfully loaded page table!\n");
 
     __asm__ volatile ("cli");
 
@@ -63,7 +66,7 @@ void kernel_main(){
     
     // print("[KERNEL] Initializing paging...\n");
     // paging_set_root();
-    // init_paging();
+    
     // print("[KERNEL] Loading page table...\n");
     // set_cr3();
     // print("[KERNEL] Now kernel runs at 0xFFFF800000000000!\n");
@@ -100,7 +103,7 @@ void kernel_main(){
     }
 }
 
-void init_paging(){
+void init_kernel_paging(){
     // 内核
     map_pages(0, 256*MB, 0, PRESENT | WRITABLE);  // 恒等
     map_pages(KERNEL_VIRT, 32*MB, 0, PRESENT | WRITABLE);  // 高地址

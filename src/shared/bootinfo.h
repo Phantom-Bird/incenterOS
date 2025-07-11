@@ -23,6 +23,7 @@ typedef struct {
     EFI_MEMORY_DESCRIPTOR *mem_map;
     uint64_t count;
     uint64_t desc_size;
+    uint64_t phys_mem_size;
 } MemMapInfo;
 
 typedef struct {

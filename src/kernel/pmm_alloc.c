@@ -7,7 +7,6 @@
 uint8_t page_bitmap[MAX_PAGE_COUNT / 8];  // 是否被占用（不可用或已分配）
 uint8_t page_available[MAX_PAGE_COUNT / 8];  // 是否可用
 size_t total_pages;
-size_t phys_mem_size;
 
 void pmm_init(const EFI_MEMORY_DESCRIPTOR * const mem_map, 
               size_t count, size_t desc_size){
@@ -18,11 +17,6 @@ void pmm_init(const EFI_MEMORY_DESCRIPTOR * const mem_map,
     for (size_t i=0; i < count; i++){
         const EFI_MEMORY_DESCRIPTOR *desc = 
             (const EFI_MEMORY_DESCRIPTOR*) ((uint8_t*)mem_map + i * desc_size);
-
-        size_t end =  desc->VirtualStart + desc->NumberOfPages * PAGE_SIZE;
-        if (end > phys_mem_size){
-            phys_mem_size = end;
-        }
 
         if (desc->Type != EfiConventionalMemory){
             continue;

@@ -4,6 +4,7 @@
 #include "alloc.h"
 #include "fs.h"
 #include "loadkernel.h"
+#include "memmap.h"
 #include "exitboot.h"
 #include "output.h"
 #include "gop.h"
@@ -21,14 +22,13 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     BS = SystemTable->BootServices;
 
     SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
-    PutStr(L"Booting...\r\n");
+    PutStr(L"incenterOS bootloader\r\n");
 
     EFI_FILE_HANDLE Volume = GetVolume(ImageHandle);
-    PutStr(L"[BOOT] Reading kernel...\r\n");
-    void *KernelBuffer = ReadFile(Volume, L"\\kernel.elf", NULL);
+
     PutStr(L"[BOOT] Loading kernel...\r\n");
+    void *KernelBuffer = ReadFile(Volume, L"\\kernel.elf", NULL);
     KERNEL_ENTRY KernelEntry = LoadKernel(KernelBuffer);
-    PutStr(L"[BOOT] Loaded kernel.\r\n");
     SystemTable->BootServices->FreePool(KernelBuffer);
 
     PutStr(L"[BOOT] Locating GOP...\r\n");
@@ -36,10 +36,10 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
     PutStr(L"[BOOT] Allocating stack...\r\n");
     const UINTN 
-        M = 0x100000,
+        MB = 0x100000,
         KernelStackSize = 0x8000,
         KernelStackPages = KernelStackSize / PageSize,
-        KernelStackBase = 24*M,
+        KernelStackBase = 24*MB,
         KernelStackTop = KernelStackBase + KernelStackSize;
     AllocatePagesAt(KernelStackBase, KernelStackPages);
 
@@ -47,10 +47,12 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     UINT64 InitRDSize;
     void *InitRDStart = ReadFile(Volume, L"\\initrd.img", &InitRDSize);
 
-    // GetMapKey();
-
+    PutStr(L"[BOOT] Initalizing paging...\r\n");
+    UINT64 MemSize = GetMemSize();
     paging_set_root();
+    map_pages(0, 1*1024*1024*1024, 0, WRITABLE | PRESENT);
 
+    PutStr(L"[BOOT] Initalizing boot info...\r\n");
     BI.magic = MAGIC;
     BI.graphics.framebuffer = fb;
     BI.graphics.width = ScreenWidth;
@@ -59,17 +61,17 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     BI.graphics.pitch = Pitch;
     BI.stack.base_addr = KernelStackBase;
     BI.stack.size = KernelStackSize;
-    GetMemMap(&BI.mem.mem_map, &BI.mem.count, &BI.mem.desc_size, NULL);
+    BI.mem.phys_mem_size = MemSize;
     BI.initrd.start = (EFI_PHYSICAL_ADDRESS)InitRDStart;
     BI.initrd.size = InitRDSize;
     BI.pml4_phys = pml4_phys;
-    
-    init_paging(BI);
 
+    PutStr("[BOOT] Mapping virtual address...\r\n");
+    init_paging(BI);
+    
     PutStr(L"[BOOT] Exiting boot...\r\n");
-    // UINTN MapKey = GetMapKey();
     UINTN MapKey;
-    GetMemMap(NULL, NULL, NULL, &MapKey);
+    GetMemMap(&BI.mem.mem_map, &BI.mem.count, &BI.mem.desc_size, &MapKey);
     ExitBootDevices(ImageHandle, MapKey);
     
     set_cr3();
