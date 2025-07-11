@@ -39,6 +39,8 @@ void kernel_main(){
         }
     }
 
+    paging_load_root(boot_info.pml4_phys);
+
     InitGOPFrom(boot_info.graphics);
     ClearScreen();
     set_scaling(1, 2);
@@ -54,16 +56,17 @@ void kernel_main(){
     init_idt();
 
     print("[KERNEL] Initializing physical memory allocater...\n");
+    print("cnt=");print_dec(boot_info.mem.count);print("\n");
     pmm_init(boot_info.mem.mem_map,
              boot_info.mem.count,
              boot_info.mem.desc_size);
     
-    print("[KERNEL] Initializing paging...\n");
-    paging_set_root();
-    init_paging();
-    print("[KERNEL] Loading page table...\n");
-    set_cr3();
-    print("[KERNEL] Now kernel runs at 0xFFFF800000000000!\n");
+    // print("[KERNEL] Initializing paging...\n");
+    // paging_set_root();
+    // init_paging();
+    // print("[KERNEL] Loading page table...\n");
+    // set_cr3();
+    // print("[KERNEL] Now kernel runs at 0xFFFF800000000000!\n");
     
     apic_enable();
     init_timer();

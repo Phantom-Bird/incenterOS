@@ -1,7 +1,7 @@
 #pragma once
 
-#define KERNEL
+#define BOOTLOADER
 
 #include "../shared/paging.h"
 
-#undef KERNEL
+#undef BOOTLOADER

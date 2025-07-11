@@ -38,7 +38,7 @@ MOUNT		:= /mnt/incenter
 
 # === QEMU ===
 OVMF_FLAGS	:= -bios OVMF.fd
-QEMU_FLAGS	:= $(OVMF_FLAGS) -drive format=raw,file=$(ESP_IMG) -m 256M -machine q35
+QEMU_FLAGS	:= $(OVMF_FLAGS) -drive format=raw,file=$(ESP_IMG) -m 1G -machine q35
 QEMU_DEBUG	:= -d int,cpu_reset,guest_errors -no-reboot -D debug.log
 
 # === Default Target ===

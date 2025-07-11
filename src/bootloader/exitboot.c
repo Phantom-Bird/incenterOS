@@ -3,7 +3,15 @@
 EFI_MEMORY_DESCRIPTOR *mem_map;
 UINT64 MemMapCount, MemMapDescSize;
 
-UINTN GetMapKey() {
+#define MACRO_WRAPPER(stmt) do {stmt} while (FALSE)
+#define PTR_ASSIGN(ptr, val) MACRO_WRAPPER(if (ptr) {*(ptr) = val;})
+
+void GetMemMap(
+        EFI_MEMORY_DESCRIPTOR **outMemMap,
+        UINT64 *outMemMapCount,
+        UINT64 *outMemMapDescSize,
+        UINT64 *outMapKey
+) {
     EFI_STATUS status;
 
     UINTN MapSize = 0, MapKey, DescSize;
@@ -28,21 +36,10 @@ UINTN GetMapKey() {
         Err(L"[ERROR] GetMemoryMap (actual) failed.\r\n");
     }
 
-    // Will Change Memory Map
-    // for (int i=0; i < MemMapCount; i++){
-    //     EFI_MEMORY_DESCRIPTOR* desc = (EFI_MEMORY_DESCRIPTOR*)((UINT8*)mem_map + (i*DescSize));
-    //     if (desc->Type == 7){
-    //         PutStr(L"[MEM] Type: ");
-    //         PrintDec(desc->Type);
-    //         PutStr(L", Start: ");
-    //         PrintHex(desc->PhysicalStart);
-    //         PutStr(L", Pages: ");
-    //         PrintHex(desc->NumberOfPages);
-    //         PutStr(L"\r\n");
-    //     }
-    // }
-
-    return MapKey;
+    PTR_ASSIGN(outMemMap, mem_map);
+    PTR_ASSIGN(outMemMapCount, MemMapCount);
+    PTR_ASSIGN(outMemMapDescSize, DescSize);
+    PTR_ASSIGN(outMapKey, MapKey);
 }
 
 void ExitBootDevices(EFI_HANDLE ImageHandle, UINTN MapKey){

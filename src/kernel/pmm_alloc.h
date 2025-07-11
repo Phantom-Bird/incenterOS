@@ -9,10 +9,6 @@
 
 typedef uint64_t PhysicalAddress;
 
-static inline void* phys2virt(PhysicalAddress phys){
-    return (void*) phys;
-}
-
 void pmm_init(const EFI_MEMORY_DESCRIPTOR *mem_map, 
               size_t count, size_t desc_size);
 

@@ -13,6 +13,8 @@ EFI_SYSTEM_TABLE *ST;
 EFI_BOOT_SERVICES *BS;
 BootInfo BI;
 
+void init_paging(BootInfo boot_info);
+
 EFI_STATUS EFIAPI 
 efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     ST = SystemTable;
@@ -45,9 +47,9 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     UINT64 InitRDSize;
     void *InitRDStart = ReadFile(Volume, L"\\initrd.img", &InitRDSize);
 
-    PutStr(L"[BOOT] Exiting boot...\r\n");
-    UINTN MapKey = GetMapKey();
-    ExitBootDevices(ImageHandle, MapKey);
+    // GetMapKey();
+
+    paging_set_root();
 
     BI.magic = MAGIC;
     BI.graphics.framebuffer = fb;
@@ -57,11 +59,20 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     BI.graphics.pitch = Pitch;
     BI.stack.base_addr = KernelStackBase;
     BI.stack.size = KernelStackSize;
-    BI.mem.mem_map = mem_map;
-    BI.mem.count = MemMapCount;
-    BI.mem.desc_size = MemMapDescSize;
+    GetMemMap(&BI.mem.mem_map, &BI.mem.count, &BI.mem.desc_size, NULL);
     BI.initrd.start = (EFI_PHYSICAL_ADDRESS)InitRDStart;
-    BI.initrd.size = InitRDSize;    
+    BI.initrd.size = InitRDSize;
+    BI.pml4_phys = pml4_phys;
+    
+    init_paging(BI);
+
+    PutStr(L"[BOOT] Exiting boot...\r\n");
+    // UINTN MapKey = GetMapKey();
+    UINTN MapKey;
+    GetMemMap(NULL, NULL, NULL, &MapKey);
+    ExitBootDevices(ImageHandle, MapKey);
+    
+    set_cr3();
 
     __asm__ volatile (
         "mov %[stack], %%rsp\n"
@@ -77,3 +88,29 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
     return EFI_SUCCESS;
 }
+
+#define MB (1024 * 1024)
+#define APIC_DEFAULT_BASE 0xFEE00000
+#define IOAPIC_DEFAULT_BASE  0xFEC00000
+
+void init_paging(BootInfo boot_info){
+    // 内核
+    map_pages(0, 1024*MB, 0, PRESENT | WRITABLE);  // 恒等
+    // 已经包括栈
+
+    // 帧缓冲区
+    uint64_t fb_base = (uint64_t)(boot_info.graphics.framebuffer);
+    uint64_t fb_size = boot_info.graphics.size_bytes;  // BI 新增项目
+    map_pages(fb_base, fb_size, fb_base, PRESENT | WRITABLE);
+
+    // APIC MMIO
+    map_pages(APIC_DEFAULT_BASE, 0x1000, APIC_DEFAULT_BASE, PRESENT | WRITABLE);
+    map_pages(IOAPIC_DEFAULT_BASE, 0x1000, IOAPIC_DEFAULT_BASE, PRESENT | WRITABLE);
+
+    // initrd
+    map_pages(boot_info.initrd.start, 
+              boot_info.initrd.size, 
+              boot_info.initrd.start,
+              PRESENT | WRITABLE);
+}
+

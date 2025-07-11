@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <efi.h>
+#include "paging.h"
 
 #define MAGIC 0x00796c6665726946
 
@@ -35,4 +36,5 @@ typedef struct {
     StackInfo stack;
     MemMapInfo mem;
     InitrdInfo initrd;
+    uint64_t pml4_phys;
 } BootInfo;
