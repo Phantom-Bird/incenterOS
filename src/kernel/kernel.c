@@ -59,7 +59,6 @@ void kernel_main(){
     init_idt();
 
     print("[KERNEL] Initializing physical memory allocater...\n");
-    print("cnt=");print_dec(boot_info.mem.count);print("\n");
     pmm_init(boot_info.mem.mem_map,
              boot_info.mem.count,
              boot_info.mem.desc_size);
@@ -78,7 +77,7 @@ void kernel_main(){
     __asm__ volatile ("sti");
 
     print("[KERNEL] Loading initrd...\n");
-    cpio_init((void*)boot_info.initrd.start, boot_info.initrd.size);
+    cpio_init(boot_info.initrd.start, boot_info.initrd.size);
     
     print("[KERNEL]\n");
     FSItem *file_info = initramfs_find(NULL, "/dir/ciallo.txt");
@@ -103,26 +102,26 @@ void kernel_main(){
     }
 }
 
-void init_kernel_paging(){
-    // 内核
-    map_pages(0, 256*MB, 0, PRESENT | WRITABLE);  // 恒等
-    map_pages(KERNEL_VIRT, 32*MB, 0, PRESENT | WRITABLE);  // 高地址
-    // 已经包括栈
+// void init_kernel_paging(){
+//     // 内核
+//     map_pages(0, 256*MB, 0, PRESENT | WRITABLE);  // 恒等
+//     map_pages(KERNEL_VIRT, 32*MB, 0, PRESENT | WRITABLE);  // 高地址
+//     // 已经包括栈
 
-    // 帧缓冲区
-    uint64_t fb_base = (uint64_t)(boot_info.graphics.framebuffer);
-    uint64_t fb_size = boot_info.graphics.size_bytes;  // BI 新增项目
-    map_pages(fb_base, fb_size, fb_base, PRESENT | WRITABLE);
-    map_pages(FB_VIRT, fb_size, fb_base, PRESENT | WRITABLE);
+//     // 帧缓冲区
+//     uint64_t fb_base = (uint64_t)(boot_info.graphics.framebuffer);
+//     uint64_t fb_size = boot_info.graphics.size_bytes;  // BI 新增项目
+//     map_pages(fb_base, fb_size, fb_base, PRESENT | WRITABLE);
+//     map_pages(FB_VIRT, fb_size, fb_base, PRESENT | WRITABLE);
 
-    // APIC MMIO
-    map_pages(APIC_DEFAULT_BASE, 0x1000, APIC_DEFAULT_BASE, PRESENT | WRITABLE);
-    map_pages(IOAPIC_DEFAULT_BASE, 0x1000, IOAPIC_DEFAULT_BASE, PRESENT | WRITABLE);
+//     // APIC MMIO
+//     map_pages(APIC_DEFAULT_BASE, 0x1000, APIC_DEFAULT_BASE, PRESENT | WRITABLE);
+//     map_pages(IOAPIC_DEFAULT_BASE, 0x1000, IOAPIC_DEFAULT_BASE, PRESENT | WRITABLE);
 
-    // initrd
-    map_pages(boot_info.initrd.start, 
-              boot_info.initrd.size, 
-              boot_info.initrd.start,
-              PRESENT | WRITABLE);
-}
+//     // initrd
+//     map_pages(boot_info.initrd.start, 
+//               boot_info.initrd.size, 
+//               boot_info.initrd.start,
+//               PRESENT | WRITABLE);
+// }
 

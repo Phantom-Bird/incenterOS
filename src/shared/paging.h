@@ -15,6 +15,7 @@ static inline void* phys2virt(PhysicalAddress phys){
 #define PRESENT     0x1
 #define WRITABLE    0x2
 #define USER        0x4
+#define UNCACHEABLE 0x10
 
 typedef union PageTableEntry {
     struct __attribute__((packed)) {

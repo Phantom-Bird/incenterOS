@@ -27,7 +27,7 @@ typedef struct {
 } MemMapInfo;
 
 typedef struct {
-    uint64_t start;
+    void *start;
     uint64_t size;
 } InitrdInfo;
 

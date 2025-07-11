@@ -9,12 +9,12 @@
 #include "output.h"
 #include "gop.h"
 #include "../shared/graphics/logo.h"
+#include "hloader.h"
+#include "../shared/addr.h"
 
 EFI_SYSTEM_TABLE *ST;
 EFI_BOOT_SERVICES *BS;
 BootInfo BI;
-
-void init_paging(BootInfo boot_info);
 
 EFI_STATUS EFIAPI 
 efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
@@ -36,7 +36,6 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
     PutStr(L"[BOOT] Allocating stack...\r\n");
     const UINTN 
-        MB = 0x100000,
         KernelStackSize = 0x8000,
         KernelStackPages = KernelStackSize / PageSize,
         KernelStackBase = 24*MB,
@@ -48,9 +47,7 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     void *InitRDStart = ReadFile(Volume, L"\\initrd.img", &InitRDSize);
 
     PutStr(L"[BOOT] Initalizing paging...\r\n");
-    UINT64 MemSize = GetMemSize();
     paging_set_root();
-    map_pages(0, 1*1024*1024*1024, 0, WRITABLE | PRESENT);
 
     PutStr(L"[BOOT] Initalizing boot info...\r\n");
     BI.magic = MAGIC;
@@ -61,18 +58,20 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     BI.graphics.pitch = Pitch;
     BI.stack.base_addr = KernelStackBase;
     BI.stack.size = KernelStackSize;
-    BI.mem.phys_mem_size = MemSize;
-    BI.initrd.start = (EFI_PHYSICAL_ADDRESS)InitRDStart;
+    BI.mem.phys_mem_size = GetMemSize();;
+    BI.initrd.start = InitRDStart;
     BI.initrd.size = InitRDSize;
     BI.pml4_phys = pml4_phys;
 
     PutStr("[BOOT] Mapping virtual address...\r\n");
-    init_paging(BI);
+    InitPaging(BI);
     
     PutStr(L"[BOOT] Exiting boot...\r\n");
     UINTN MapKey;
     GetMemMap(&BI.mem.mem_map, &BI.mem.count, &BI.mem.desc_size, &MapKey);
     ExitBootDevices(ImageHandle, MapKey);
+
+    TranslateBI(&BI);
     
     set_cr3();
 
@@ -81,7 +80,7 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         "mov %[info], %%rdi\n"
         "jmp *%[entry]\n"
         :
-        : [stack] "r"(KernelStackTop), 
+        : [stack] "r"(BI.stack.base_addr + BI.stack.size),  // 注意：x86 是满递减栈；rsp 指向有效内存的下一个地址
           [info] "r"(&BI),
           [entry] "r"(KernelEntry)
     );
@@ -90,29 +89,3 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
     return EFI_SUCCESS;
 }
-
-#define MB (1024 * 1024)
-#define APIC_DEFAULT_BASE 0xFEE00000
-#define IOAPIC_DEFAULT_BASE  0xFEC00000
-
-void init_paging(BootInfo boot_info){
-    // 内核
-    map_pages(0, 1024*MB, 0, PRESENT | WRITABLE);  // 恒等
-    // 已经包括栈
-
-    // 帧缓冲区
-    uint64_t fb_base = (uint64_t)(boot_info.graphics.framebuffer);
-    uint64_t fb_size = boot_info.graphics.size_bytes;  // BI 新增项目
-    map_pages(fb_base, fb_size, fb_base, PRESENT | WRITABLE);
-
-    // APIC MMIO
-    map_pages(APIC_DEFAULT_BASE, 0x1000, APIC_DEFAULT_BASE, PRESENT | WRITABLE);
-    map_pages(IOAPIC_DEFAULT_BASE, 0x1000, IOAPIC_DEFAULT_BASE, PRESENT | WRITABLE);
-
-    // initrd
-    map_pages(boot_info.initrd.start, 
-              boot_info.initrd.size, 
-              boot_info.initrd.start,
-              PRESENT | WRITABLE);
-}
-

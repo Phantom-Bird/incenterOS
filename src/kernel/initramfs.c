@@ -5,10 +5,10 @@
 #include "print.h"
 #include "pool.h"
 #include "hash.h"
+#include "../shared/addr.h"
 
-#define INITRAMFS_POOL_VIRT      0xFFFF800000000000
-#define INITRAMFS_POOL_MAX       (1 << 30) // 1GB
-#define INITRAMFS_POOL_INIT_SIZE (1 << 24) // 16MB
+#define INITRAMFS_POOL_MAX       (1 << 30)  // 1 GB
+#define INITRAMFS_POOL_INIT_SIZE (1 << 24)  // 16MB
 
 FSItem *fs_root;
 LargePool fs_pool;

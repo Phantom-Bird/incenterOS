@@ -5,7 +5,7 @@
 #define APIC_BASE_MSR 0x1B
 #define APIC_SVR 0xF0
 #define APIC_ENABLE 0x100
-#define APIC_LVT_LINT0 (APIC_DEFAULT_BASE + 0x350)
+#define APIC_LVT_LINT0 (APIC_VIRT_BASE + 0x350)
 
 void apic_enable() {
     // Enable APIC in MSR

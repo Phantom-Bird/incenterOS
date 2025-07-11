@@ -6,8 +6,8 @@
 // 单个 CPIO 条目结构：
 // struct CPIO __attribute__((aligned(4))){
 //     CPIOHeader header;
-//     bits32 filename[header.namesize];
-//     bits32 filedata[header.filesize];
+//     byte filename[header.namesize];
+//     byte filedata[header.filesize];
 // };
 
 static inline uint64_t align_up(uint64_t x){
