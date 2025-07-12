@@ -6,12 +6,14 @@
 #include "pool.h"
 #include "hash.h"
 #include "../shared/addr.h"
+#include "paging.h"
 
 #define INITRAMFS_POOL_MAX       (1 << 30)  // 1 GB
 #define INITRAMFS_POOL_INIT_SIZE (1 << 24)  // 16MB
 
 FSItem *fs_root;
 LargePool fs_pool;
+extern PhysicalAddress kernel_pml4_phys;
 
 static inline FSItem* new_item(FSItem *parent, uint64_t bucket){    
     FSItem *item = pool_alloc(&fs_pool, sizeof(FSItem));
@@ -35,7 +37,7 @@ static inline FSItem* new_item(FSItem *parent, uint64_t bucket){
 }
 
 void initramfs_init(){
-    fs_pool = create_pool(INITRAMFS_POOL_VIRT, INITRAMFS_POOL_INIT_SIZE, INITRAMFS_POOL_MAX);
+    fs_pool = create_pool(INITRAMFS_POOL_VIRT, INITRAMFS_POOL_INIT_SIZE, INITRAMFS_POOL_MAX, kernel_pml4_phys);
     fs_root = new_item(NULL, 0);
 }
 

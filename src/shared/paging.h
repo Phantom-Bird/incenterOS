@@ -47,13 +47,8 @@ typedef union PageTableEntry {
 } PageTableEntry;
 
 typedef PageTableEntry* PageTable;
-extern PhysicalAddress pml4_phys;
-extern PageTable kernel_pml4;
 
-void map_page(uint64_t virt, uint64_t phys, uint64_t flags);
+void map_page(PhysicalAddress pml4_phys, uint64_t virt, uint64_t phys, uint64_t flags);
+void map_pages(PhysicalAddress pml4_phys, uint64_t virt_start, size_t bytes, uint64_t phys_start, uint64_t flags);
 
-void map_pages(uint64_t virt_start, size_t bytes, uint64_t phys_start, uint64_t flags);
-
-
-void paging_set_root();
-void paging_load_root(PhysicalAddress pml4_phys);
+PhysicalAddress paging_get_root();

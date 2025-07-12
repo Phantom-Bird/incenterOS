@@ -50,7 +50,7 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     void *InitRDStart = ReadFile(Volume, L"\\initrd.img", &InitRDSize);
 
     PutStr(L"[BOOT] Initalizing paging...\r\n");
-    paging_set_root();
+    PhysicalAddress pml4_phys = paging_get_root();
 
     PutStr(L"[BOOT] Initalizing boot info...\r\n");
     BI.magic = MAGIC;
@@ -73,7 +73,7 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     uint64_t rip;
     __asm__ volatile ("leaq (%%rip), %0" : "=r"(rip));
     PutStr(L"[BOOT] Runs at "); PrintHex(rip); PutStr(L"\r\n");
-    map_pages(rip &~0xFFF, 2*MB, rip &~0xFFF, WRITABLE | PRESENT);
+    map_pages(pml4_phys, rip &~0xFFF, 4*MB, rip &~0xFFF, WRITABLE | PRESENT);
     
     PutStr(L"[BOOT] Exiting boot...\r\n");
     UINTN MapKey;

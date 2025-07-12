@@ -5,12 +5,13 @@
 
 #define PADDING 4
 
-LargePool create_pool(uint64_t virt_start, uint64_t size, uint64_t capacity){
+LargePool create_pool(uint64_t virt_start, uint64_t size, uint64_t capacity, PhysicalAddress pml4_phys){
     LargePool pool = (LargePool){
         .virt_start = virt_start,
         .size = 0,
         .capacity = capacity,
         .used = 0,
+        .pml4_phys = pml4_phys,
     };
     extend_pool(&pool, size);
     return pool;
@@ -28,6 +29,7 @@ uint8_t extend_pool(LargePool *pool, uint64_t size) {
 
     for (uint64_t i = 0; i < new_pages; i++) {
         map_page(
+            pool->pml4_phys,
             pool->virt_start + (old_pages + i) * PAGE_SIZE,
             (uint64_t)alloc_page(),
             PRESENT | WRITABLE

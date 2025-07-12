@@ -12,9 +12,6 @@
 #define PD_IDX(virt)    (((virt) >> 21) & BITS9)
 #define PT_IDX(virt)    (((virt) >> 12) & BITS9)
 
-PhysicalAddress pml4_phys;
-PageTable kernel_pml4;  // 内核页表根
-
 PhysicalAddress alloc_table(){
     PhysicalAddress page_phys = alloc_page();
     if (!page_phys) {
@@ -55,14 +52,14 @@ static inline void push_down(PageTableEntry *pd_entry) {
     }
 }
 
-void map_page(uint64_t virt, uint64_t phys, uint64_t flags) {
+void map_page(PhysicalAddress pml4_phys, uint64_t virt, uint64_t phys, uint64_t flags) {
     // print("mapping ~~...\n");
     size_t pml4_index = PML4_IDX(virt);
     size_t pdpt_index = PDPT_IDX(virt);
     size_t pd_index   = PD_IDX(virt);
     size_t pt_index   = PT_IDX(virt);
 
-    PageTable pdpt = get_or_alloc_table_of(kernel_pml4+pml4_index, PRESENT | WRITABLE);
+    PageTable pdpt = get_or_alloc_table_of((PageTable)phys2virt(pml4_phys)+pml4_index, PRESENT | WRITABLE);
     PageTable pd   = get_or_alloc_table_of(pdpt+pdpt_index, PRESENT | WRITABLE);
 
     push_down(pd+pd_index);
@@ -72,45 +69,35 @@ void map_page(uint64_t virt, uint64_t phys, uint64_t flags) {
 }
 
 // 2MB 大页
-void map_huge_page(uint64_t virt, uint64_t phys, uint64_t flags){
+void map_huge_page(PhysicalAddress pml4_phys, uint64_t virt, uint64_t phys, uint64_t flags){
     size_t pml4_index = PML4_IDX(virt);
     size_t pdpt_index = PDPT_IDX(virt);
     size_t pd_index   = PD_IDX(virt);
 
-    PageTable pdpt = get_or_alloc_table_of(kernel_pml4+pml4_index, PRESENT | WRITABLE);
+    PageTable pdpt = get_or_alloc_table_of((PageTable)phys2virt(pml4_phys)+pml4_index, PRESENT | WRITABLE);
     PageTable pd   = get_or_alloc_table_of(pdpt+pdpt_index, PRESENT | WRITABLE);
 
     pd[pd_index].value = (phys & ~(HUGE_PAGE_SIZE-1)) | flags | HUGE_PAGE;
 }
 
-void map_pages(uint64_t virt_start, size_t bytes, uint64_t phys_start, uint64_t flags){
+void map_pages(PhysicalAddress pml4_phys, uint64_t virt_start, size_t bytes, uint64_t phys_start, uint64_t flags){
     virt_start &= ~(PAGE_SIZE-1);
     phys_start &= ~(PAGE_SIZE-1);
     uint64_t off = 0;
 
     for (; ((virt_start + off) & (HUGE_PAGE_SIZE-1)) && off < bytes; off += PAGE_SIZE){
-        map_page(virt_start + off, phys_start + off, flags);
+        map_page(pml4_phys, virt_start + off, phys_start + off, flags);
     }
 
     for(; off + HUGE_PAGE_SIZE <= bytes; off += HUGE_PAGE_SIZE) {
-        map_huge_page(virt_start + off, phys_start + off, flags);
+        map_huge_page(pml4_phys, virt_start + off, phys_start + off, flags);
     }
     
     for (; off < bytes; off += PAGE_SIZE){
-        map_page(virt_start + off, phys_start + off, flags);
+        map_page(pml4_phys, virt_start + off, phys_start + off, flags);
     }
 }
 
-void paging_set_root(){
-    pml4_phys = alloc_table();
-    kernel_pml4 = phys2virt(pml4_phys);
-
-    if (!pml4_phys){
-        raise_err("[ERROR] Cannot alloc PML4 table.");
-    }
-}
-
-void paging_load_root(PhysicalAddress pml4_phys_){
-    pml4_phys = pml4_phys_;
-    kernel_pml4 = phys2virt(pml4_phys);
+PhysicalAddress paging_get_root(){
+    return alloc_table();
 }

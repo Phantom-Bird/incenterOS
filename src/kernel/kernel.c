@@ -24,13 +24,12 @@
 void kernel_main();
 
 BootInfo boot_info;
+PhysicalAddress kernel_pml4_phys;
 
 void kernel_entry(BootInfo *bi) {
     boot_info = *bi;
     kernel_main();
 }
-
-void init_kernel_paging();
 
 void kernel_main(){
     if (boot_info.magic != MAGIC){
@@ -39,8 +38,8 @@ void kernel_main(){
         }
     }
 
-    paging_load_root(boot_info.pml4_phys);
-    // init_kernel_paging();
+    // paging_load_root(boot_info.pml4_phys);
+    kernel_pml4_phys = boot_info.pml4_phys;
 
     InitGOPFrom(boot_info.graphics);
     ClearScreen();
@@ -96,27 +95,3 @@ void kernel_main(){
         __asm__ volatile ("hlt");
     }
 }
-
-// void init_kernel_paging(){
-//     // 内核
-//     map_pages(0, 256*MB, 0, PRESENT | WRITABLE);  // 恒等
-//     map_pages(KERNEL_VIRT, 32*MB, 0, PRESENT | WRITABLE);  // 高地址
-//     // 已经包括栈
-
-//     // 帧缓冲区
-//     uint64_t fb_base = (uint64_t)(boot_info.graphics.framebuffer);
-//     uint64_t fb_size = boot_info.graphics.size_bytes;  // BI 新增项目
-//     map_pages(fb_base, fb_size, fb_base, PRESENT | WRITABLE);
-//     map_pages(FB_VIRT, fb_size, fb_base, PRESENT | WRITABLE);
-
-//     // APIC MMIO
-//     map_pages(APIC_DEFAULT_BASE, 0x1000, APIC_DEFAULT_BASE, PRESENT | WRITABLE);
-//     map_pages(IOAPIC_DEFAULT_BASE, 0x1000, IOAPIC_DEFAULT_BASE, PRESENT | WRITABLE);
-
-//     // initrd
-//     map_pages(boot_info.initrd.start, 
-//               boot_info.initrd.size, 
-//               boot_info.initrd.start,
-//               PRESENT | WRITABLE);
-// }
-
