@@ -85,6 +85,7 @@ void map_huge_page(uint64_t virt, uint64_t phys, uint64_t flags){
 
 void map_pages(uint64_t virt_start, size_t bytes, uint64_t phys_start, uint64_t flags){
     virt_start &= ~(PAGE_SIZE-1);
+    phys_start &= ~(PAGE_SIZE-1);
     uint64_t off = 0;
 
     for (; ((virt_start + off) & (HUGE_PAGE_SIZE-1)) && off < bytes; off += PAGE_SIZE){
@@ -112,12 +113,4 @@ void paging_set_root(){
 void paging_load_root(PhysicalAddress pml4_phys_){
     pml4_phys = pml4_phys_;
     kernel_pml4 = phys2virt(pml4_phys);
-}
-
-void set_cr3(){
-    if (!pml4_phys){
-        raise_err("[ERROR] Set CR3 with root unset.");
-    }
-
-    __asm__ volatile ("mov %0, %%cr3" :: "r"(pml4_phys));
 }

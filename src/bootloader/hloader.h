@@ -4,4 +4,4 @@
 
 void InitPaging(BootInfo boot_info);
 
-void TranslateBI(BootInfo *BI);
+BootInfo* TranslateBI(BootInfo *BI);

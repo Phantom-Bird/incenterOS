@@ -2,15 +2,25 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "mem.h"
+#include "addr.h"
 
 typedef uint64_t PhysicalAddress;
 // 需要实现以下接口：
 extern PhysicalAddress alloc_page();
 extern void raise_err(char *s);
 
+#ifdef BOOTLOADER
+#define PHYS_BASE 0
+#endif
+#ifdef KERNEL
+#define PHYS_BASE HIGH_ADDR
+#endif
+
+#ifdef PHYS_BASE
 static inline void* phys2virt(PhysicalAddress phys){
-    return (void*) phys;
+    return (void*)phys + PHYS_BASE;
 }
+#endif
 
 #define PRESENT     0x1
 #define WRITABLE    0x2
@@ -46,5 +56,4 @@ void map_pages(uint64_t virt_start, size_t bytes, uint64_t phys_start, uint64_t 
 
 
 void paging_set_root();
-void set_cr3();
 void paging_load_root(PhysicalAddress pml4_phys);

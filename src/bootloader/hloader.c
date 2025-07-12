@@ -12,7 +12,7 @@ void InitPaging(BootInfo boot_info){
     }
 
     map_pages(HIGH_ADDR, mem_size, 0, PRESENT | WRITABLE); 
-    map_pages(0, mem_size, 0, PRESENT | WRITABLE);  // 恒等
+    map_pages(0, 8*MB, 0, PRESENT | WRITABLE);  // 恒等，此处只映射内核以确保其他数据映射完整
     // 内核栈
     map_pages(STACK_VIRT_BASE, boot_info.stack.size, boot_info.stack.base_addr, PRESENT | WRITABLE);
 
@@ -26,10 +26,13 @@ void InitPaging(BootInfo boot_info){
     map_pages(IOAPIC_VIRT_BASE, 0x1000, IOAPIC_DEFAULT_BASE, PRESENT | WRITABLE | UNCACHEABLE);
 }
 
-void TranslateBI(BootInfo *BI){
+BootInfo* TranslateBI(BootInfo *BI){
     BI->mem.mem_map = (void*)BI->mem.mem_map + HIGH_ADDR;
     BI->initrd.start = (void*)BI->initrd.start + HIGH_ADDR;
 
     BI->graphics.framebuffer = (void*)FB_VIRT_BASE;
     BI->stack.base_addr = STACK_VIRT_BASE;
+
+    return (void*)BI + HIGH_ADDR;
+    // 必须转成 (void*)，因为 ptr + idx 相当于 &ptr[idx]
 }

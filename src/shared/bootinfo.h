@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <efi.h>
-#include "paging.h"
+// #include "paging.h"
 
 #define MAGIC 0x00796c6665726946
 
