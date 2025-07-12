@@ -20,9 +20,9 @@ KERNEL_ENTRY LoadKernel(void *KernelBuffer) {
         }
 
         void *src = KernelBuffer + ph->p_offset;
-        void *dest = (void*)(UINTN) ph->p_vaddr;
+        void *dest = (void*)(UINTN) ph->p_vaddr - HIGH_ADDR;
 
-        EFI_PHYSICAL_ADDRESS addr = ph->p_vaddr & ~PageMask;
+        EFI_PHYSICAL_ADDRESS addr = (UINTN)dest & ~PageMask;
         UINTN num_pages = (ph->p_memsz + PageSize-1) / PageSize;
 
         TryAllocPagesAt(addr, num_pages);

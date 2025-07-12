@@ -46,7 +46,9 @@ void kernel_main(){
     ClearScreen();
     set_scaling(1, 2);
 
-    // print("[KERNEL] Successfully loaded page table!\n");
+    print("[KERNEL] Successfully loaded page table!\n");
+    print("[KERNEL] Now kernel runs at 0xFFFF800000000000!\n");
+    print("[KERNEL] Loaded GOP frame buffer.\n");
 
     __asm__ volatile ("cli");
 
@@ -62,13 +64,6 @@ void kernel_main(){
     pmm_init(boot_info.mem.mem_map,
              boot_info.mem.count,
              boot_info.mem.desc_size);
-    
-    // print("[KERNEL] Initializing paging...\n");
-    // paging_set_root();
-    
-    // print("[KERNEL] Loading page table...\n");
-    // set_cr3();
-    // print("[KERNEL] Now kernel runs at 0xFFFF800000000000!\n");
     
     apic_enable();
     init_timer();

@@ -6,6 +6,7 @@
 #include "output.h"
 #include <elf.h>
 #include "../shared/bootinfo.h"
+#include "../shared/addr.h"
 
 
 typedef void (*KERNEL_ENTRY)(BootInfo*);
