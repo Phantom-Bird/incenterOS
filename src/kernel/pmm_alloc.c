@@ -3,7 +3,6 @@
 #include "mem.h"
 #include "print.h"
 #include "lock.h"
-#include "process.h"
 
 #define RESERVED_PAGES ((1<<20) / PAGE_SIZE)
 uint8_t page_bitmap[MAX_PAGE_COUNT / 8];  // 是否被占用（不可用或已分配）
