@@ -25,7 +25,8 @@ static inline void* phys2virt(PhysicalAddress phys){
 #define PRESENT     0x1
 #define WRITABLE    0x2
 #define USER        0x4
-#define UNCACHEABLE 0x10
+#define UNCACHEABLE (1 << 4)
+#define NO_EXEC     (1 << 63)
 
 typedef union PageTableEntry {
     struct __attribute__((packed)) {
@@ -52,3 +53,5 @@ void map_page(PhysicalAddress pml4_phys, uint64_t virt, uint64_t phys, uint64_t 
 void map_pages(PhysicalAddress pml4_phys, uint64_t virt_start, size_t bytes, uint64_t phys_start, uint64_t flags);
 
 PhysicalAddress paging_get_root();
+
+PageTable get_or_alloc_table_of(PageTableEntry* entry, uint64_t flags);

@@ -12,7 +12,7 @@ void* Allocate(UINTN size);
 
 void Free(void *ptr);
 
-#define MAX_ALLOCATED 128
+#define MAX_ALLOCATED 1024
 
 void* AllocatePagesAt(EFI_PHYSICAL_ADDRESS addr, UINTN num_pages);
 

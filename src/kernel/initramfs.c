@@ -3,20 +3,19 @@
 #include "string.h"
 #include "mem.h"
 #include "print.h"
-#include "pool.h"
 #include "hash.h"
 #include "../shared/addr.h"
 #include "paging.h"
+#include "kmalloc.h"
 
 #define INITRAMFS_POOL_MAX       (1 << 30)  // 1 GB
 #define INITRAMFS_POOL_INIT_SIZE (1 << 24)  // 16MB
 
 FSItem *fs_root;
-LargePool fs_pool;
 extern PhysicalAddress kernel_pml4_phys;
 
 static inline FSItem* new_item(FSItem *parent, uint64_t bucket){    
-    FSItem *item = pool_alloc(&fs_pool, sizeof(FSItem));
+    FSItem *item = kmalloc(sizeof(FSItem));
 
     if (!item){
         return item;
@@ -37,7 +36,6 @@ static inline FSItem* new_item(FSItem *parent, uint64_t bucket){
 }
 
 void initramfs_init(){
-    fs_pool = create_pool(INITRAMFS_POOL_VIRT, INITRAMFS_POOL_INIT_SIZE, INITRAMFS_POOL_MAX, kernel_pml4_phys);
     fs_root = new_item(NULL, 0);
 }
 
@@ -72,7 +70,9 @@ FSItem* insert_child(FSItem *parent, const char *name, CPIOHeader *hdr, void *fi
     child = new_item(parent, hash_string_mod(name, HASH_BUCKETS));
     child->flags |= (mode & MODE_DIR)? ITEM_DIR : 0;
     child->flags |= (mode & MODE_FILE)? ITEM_FILE : 0;
-    child->name = pool_alloc_copy(&fs_pool, strlen(name)+1, name);
+    uint64_t name_size = strlen(name) + 1;
+    child->name = kmalloc(name_size);
+    memcpy(child->name, name, name_size);
     child->file_data = file_data;
     child->file_size = file_size;
 

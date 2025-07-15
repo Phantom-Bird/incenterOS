@@ -2,9 +2,10 @@
 
 #include <stdint.h>
 #include "cpio.h"
+#include "kmalloc.h"
 
 typedef uint64_t Flags;
-#define HASH_BUCKETS 57
+#define HASH_BUCKETS 56
 
 enum {
     ITEM_FILE = 1 << 0,
@@ -25,8 +26,7 @@ typedef struct FSItem {
 } FSItem;
 
 
-#define IT_SHOULD_BE_512 sizeof(FSItem)
-#undef IT_SHOULD_BE_512
+const uint64_t IT_SHOULD_BE_512 = (sizeof(FSItem) + sizeof(KMallocHeader));
 
 // 全局根节点
 extern FSItem *fs_root;

@@ -25,7 +25,11 @@ void* AllocatePagesAt(EFI_PHYSICAL_ADDRESS addr, UINTN num_pages){
 
     for (int i=0; i<num_pages; i++){
         if (AllocatedCnt >= MAX_ALLOCATED){
-            Err(L"[ERROR] Allocated records overflow.\r\n");
+            PutStr(L"[ERROR] Allocated records overflow.\r\n");
+            for (int i=0; i<AllocatedCnt; i++){
+                PrintHex(AllocatedPages[i]); PutChar(L' ');
+            }
+            Err(L"");
         }
 
         AllocatedPages[AllocatedCnt] = addr + num_pages * PageSize;
@@ -44,7 +48,11 @@ void* AllocatePageAt(EFI_PHYSICAL_ADDRESS addr){
     }
 
     if (AllocatedCnt >= MAX_ALLOCATED){
-        Err(L"[ERROR] Allocated records overflow.\r\n");
+        PutStr(L"[ERROR] Allocated records overflow.\r\n");
+        for (int i=0; i<AllocatedCnt; i++){
+            PrintHex(AllocatedPages[i]); PutChar(L' ');
+        }
+        Err(L"");
     }
 
     AllocatedPages[AllocatedCnt] = addr;

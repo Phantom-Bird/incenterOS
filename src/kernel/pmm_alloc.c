@@ -2,11 +2,14 @@
 #include "bitarray.h"
 #include "mem.h"
 #include "print.h"
+#include "lock.h"
+#include "process.h"
 
 #define RESERVED_PAGES ((1<<20) / PAGE_SIZE)
 uint8_t page_bitmap[MAX_PAGE_COUNT / 8];  // 是否被占用（不可用或已分配）
 uint8_t page_available[MAX_PAGE_COUNT / 8];  // 是否可用
 size_t total_pages;
+Lock pmm_lock;
 
 void pmm_init(const EFI_MEMORY_DESCRIPTOR * const mem_map, 
               size_t count, size_t desc_size){
@@ -44,13 +47,21 @@ static size_t last_pos = RESERVED_PAGES;
 
 PhysicalAddress alloc_page(){
     for (size_t i = last_pos; i < MAX_PAGE_COUNT; i++){
-        // print("!\n");
+        if (test_bit(page_bitmap, i)){
+            continue;
+        }
+
+        acquire_lock(&pmm_lock);
+
         if (!test_bit(page_bitmap, i)){
-            // print(".\n");
             set_bit(page_bitmap, i);
             last_pos = i + 1;
+            release_lock(&pmm_lock);
             return i * PAGE_SIZE;
         }
+        
+        release_lock(&pmm_lock);
+        
     }
     return 0;
 }
