@@ -27,7 +27,7 @@ uint64_t get_level(uint64_t size) {
 // 空闲块链表插入
 void kmalloc_insert(uint32_t level, void *addr) {
     WITH_LOCK(&kmalloc_locks[level], {
-        *(void**)addr = free_head[level];
+        ((KMallocHeader*)addr)->next_free = free_head[level];
         free_head[level] = addr;
     });
 }
@@ -55,7 +55,7 @@ void *kmalloc(uint64_t size) {
     void *addr = NULL;
     WITH_LOCK(&kmalloc_locks[level], {
         addr = free_head[level];
-        free_head[level] = *(void**)addr;
+        free_head[level] = ((KMallocHeader*)addr)->next_free;
     });
 
     *(KMallocHeader*)addr = (KMallocHeader){.magic=KMALLOC_MAGIC, .level=level};

@@ -26,7 +26,7 @@ typedef struct FSItem {
 } FSItem;
 
 
-const uint64_t IT_SHOULD_BE_512 = (sizeof(FSItem) + sizeof(KMallocHeader));
+static const uint64_t IT_SHOULD_BE_512 = (sizeof(FSItem) + sizeof(KMallocHeader));
 
 // 全局根节点
 extern FSItem *fs_root;
