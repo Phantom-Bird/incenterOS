@@ -1,6 +1,7 @@
 #include "print.h"
 #include "isr_common.h"
 #include "isr.h"
+#include "save_context.h"
 
 void isr_common(int vec, void* const saved_registers){
     if (isr[vec]){
@@ -16,18 +17,6 @@ void isr_common(int vec, void* const saved_registers){
     putchar('\n');
     common_color();
 }
-
-#define PUSH_ALL_REGISTERS \
-    "push %rax; push %rbx; push %rcx; push %rdx;" \
-    "push %rsi; push %rdi; push %rbp; push %r8;" \
-    "push %r9; push %r10; push %r11; push %r12;" \
-    "push %r13; push %r14; push %r15;"
-
-#define POP_ALL_REGISTERS \
-    "pop %r15; pop %r14; pop %r13; pop %r12;" \
-    "pop %r11; pop %r10; pop %r9; pop %r8;" \
-    "pop %rbp; pop %rdi; pop %rsi; pop %rdx;" \
-    "pop %rcx; pop %rbx; pop %rax;"
 
 #define ISR_STUB(vec)                                \
     __attribute__((naked)) void isr_stub_##vec() {    \

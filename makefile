@@ -9,10 +9,14 @@ SRC_DIR     		:= src
 INC_DIR     		:= inc
 BOOT_DIR			:= $(SRC_DIR)/bootloader
 KERNEL_DIR  		:= $(SRC_DIR)/kernel
+PROGRAMS_DIR		:= $(SRC_DIR)/programs
+
 BUILD_DIR   		:= build
 OBJ_DIR     		:= $(BUILD_DIR)/obj
+BIN_DIR				:= $(BUILD_DIR)/bin
 BOOT_OBJ_DIR		:= $(OBJ_DIR)/bootloader
 KERN_OBJ_DIR		:= $(OBJ_DIR)/kernel
+PROGRAMS_ELF_DIR	:= $(BIN_DIR)
 INITRD_SOURCE_DIR	:= initrd
 
 # === Flags ===
@@ -20,20 +24,23 @@ CFLAGS      := -I$(INC_DIR) -target x86_64-pc-win32-coff -ffreestanding -fno-sta
 LDFLAGS_EFI := /subsystem:efi_application /entry:efi_main /out:$(BUILD_DIR)/BOOTX64.EFI
 CFLAGS_KERN := -I$(INC_DIR) -ffreestanding -m64 -mno-red-zone -Wall -Wextra
 LDFLAGS_KERN:= -nostdlib -z noexecstack -T$(KERNEL_DIR)/linker.ld
+CFLAGS_PROG := -Wall -Wextra -nostdlib
 
 # === Files ===
-BOOT_SRCS   := $(wildcard $(BOOT_DIR)/*.c)
-BOOT_OBJS   := $(patsubst $(BOOT_DIR)/%.c, $(BOOT_OBJ_DIR)/%.obj, $(BOOT_SRCS))
-KERNEL_SRCS := $(wildcard $(KERNEL_DIR)/*.c)
-KERNEL_OBJS := $(patsubst $(KERNEL_DIR)/%.c, $(KERN_OBJ_DIR)/%.obj, $(KERNEL_SRCS))
-KERNEL_ELF  := $(BUILD_DIR)/kernel.elf
-EFI_FILE    := $(BUILD_DIR)/BOOTX64.EFI
-INITRD_CPIO := $(BUILD_DIR)/initrd.img
-ESP_IMG     := $(BUILD_DIR)/esp.img
+BOOT_SRCS   	:= $(wildcard $(BOOT_DIR)/*.c)
+BOOT_OBJS   	:= $(patsubst $(BOOT_DIR)/%.c, $(BOOT_OBJ_DIR)/%.obj, $(BOOT_SRCS))
+KERNEL_SRCS 	:= $(wildcard $(KERNEL_DIR)/*.c)
+KERNEL_OBJS 	:= $(patsubst $(KERNEL_DIR)/%.c, $(KERN_OBJ_DIR)/%.obj, $(KERNEL_SRCS))
+PROGRAMS_SRCS	:= $(wildcard $(PROGRAMS_DIR)/*.c)
+PROGRAMS_ELFS	:= $(patsubst $(PROGRAMS_DIR)/%.c, $(PROGRAMS_ELF_DIR)/%, $(PROGRAMS_SRCS))
+KERNEL_ELF  	:= $(BUILD_DIR)/kernel.elf
+EFI_FILE    	:= $(BUILD_DIR)/BOOTX64.EFI
+INITRD_CPIO 	:= $(BUILD_DIR)/initrd.img
+ESP_IMG     	:= $(BUILD_DIR)/esp.img
 
 # === Disk ===
 ESP_TMP		:= $(BUILD_DIR)/__esp.img
-LOOP		:= /dev/loop13
+LOOP		:= /dev/loop19
 MOUNT		:= /mnt/incenter
 
 # === QEMU ===
@@ -59,8 +66,13 @@ $(KERN_OBJ_DIR)/%.obj: $(KERNEL_DIR)/%.c | $(KERN_OBJ_DIR)
 $(KERNEL_ELF): $(KERNEL_OBJS)
 	$(LD) $(LDFLAGS_KERN) -o $@ $^
 
+# === Build Programs ===
+$(PROGRAMS_ELF_DIR)/%: $(PROGRAMS_DIR)/%.c $(PROGRAMS_ELF_DIR)
+	$(CLANG) $(CFLAGS_PROG) $< -o $@
+
 # === initrd ===
-$(INITRD_CPIO): $(INITRD_SOURCE_DIR)
+$(INITRD_CPIO): $(INITRD_SOURCE_DIR) $(PROGRAMS_ELFS) $(PROGRAMS_ELF_DIR)
+	cp -r $(PROGRAMS_ELF_DIR) $(INITRD_SOURCE_DIR)/
 	cd $(INITRD_SOURCE_DIR); \
 	find . | cpio -o -H newc > ../$(INITRD_CPIO); \
 	cd ..
@@ -99,7 +111,7 @@ debug: $(ESP_IMG)
 	qemu-system-x86_64 $(QEMU_FLAGS) $(QEMU_DEBUG)
 
 # === Directory setup ===
-$(OBJ_DIR) $(BUILD_DIR) $(BOOT_OBJ_DIR) $(KERN_OBJ_DIR):
+$(OBJ_DIR) $(BUILD_DIR) $(BOOT_OBJ_DIR) $(KERN_OBJ_DIR) $(PROGRAMS_ELF_DIR):
 	mkdir -p $@
 
 # === Clean ===

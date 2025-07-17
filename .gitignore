@@ -1,4 +1,5 @@
 build/
+initd/bin/
 inc/
 .idea/
 .vscode/settings.json

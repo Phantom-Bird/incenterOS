@@ -2,8 +2,8 @@
 
 #include "efi.h"
 #include "efilib.h"
+#include "../shared/addr.h"
 
-#define PAGE_SIZE 4096
 #define MAX_PHYSP_MEM (1ull << 32)  // 4GB
 #define MAX_PAGE_COUNT (MAX_PHYSP_MEM / PAGE_SIZE)
 

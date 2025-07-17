@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include "paging.h"
+#include "../shared/addr.h"
 
-#define PAGE_SIZE       0x1000ull
 #define HUGE_PAGE_SIZE  (1ull << 21)
 #define ENTRY_COUNT     512
 #define HUGE_PAGE       0x80

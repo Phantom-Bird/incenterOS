@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "size_t.h"
+#include <stddef.h>
 
 typedef uint8_t* bit_array;
 

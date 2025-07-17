@@ -3,8 +3,8 @@
 #include "lock.h"
 #include "paging.h"
 #include "kmalloc.h"
+#include "../shared/addr.h"
 
-#define PAGE_SIZE 4096
 #define MAX_LEVEL 12  // 2^12 = 4096
 #define KMALLOC_MAGIC 0x66CCFF
 

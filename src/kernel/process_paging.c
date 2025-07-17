@@ -1,8 +1,8 @@
 #include "process_paging.h"
 #include "paging.h"
 #include "pmm_alloc.h"
+#include "../shared/addr.h"
 
-#define PAGE_SIZE       0x1000ull
 #define HUGE_PAGE_SIZE  (1ull << 21)
 #define ENTRY_COUNT     512
 #define HUGE_PAGE       0x80
@@ -13,12 +13,11 @@
 #define PD_IDX(virt)    (((virt) >> 21) & BITS9)
 #define PT_IDX(virt)    (((virt) >> 12) & BITS9)
 
-PhysicalAddress proc_alloc_page(Process *process, uint8_t is_page_table){
+PhysicalAddress proc_alloc_page(Process *process, uint16_t flags){
     PhysicalAddress page = alloc_page();
     ProcessPage *pp = kmalloc(sizeof(ProcessPage));
     *pp = (ProcessPage){
-        .is_pagetable = is_page_table,
-        .is_shared = FALSE,
+        .flags = flags,
         .page = page,
         .next = process->pages,
     };
@@ -26,7 +25,7 @@ PhysicalAddress proc_alloc_page(Process *process, uint8_t is_page_table){
 }
 
 PhysicalAddress proc_alloc_table(Process *process){
-    PhysicalAddress page_phys = proc_alloc_page(process, TRUE);
+    PhysicalAddress page_phys = proc_alloc_page(process, PAGE_TABLE);
     if (!page_phys) {
         raise_err("[ERROR] Cannot alloc new page!");
     }

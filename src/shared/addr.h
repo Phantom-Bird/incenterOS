@@ -4,6 +4,7 @@
 #define MB (1ull << 20)
 #define GB (1ull << 30)
 #define TB (1ull << 40)
+#define PAGE_SIZE (4 * KB)
 
 #define APIC_DEFAULT_BASE      0xFEE00000
 #define IOAPIC_DEFAULT_BASE    0xFEC00000
@@ -17,3 +18,9 @@
 #define HIGH_ADDR           0xFFFF800000000000
 #define PHYS_MAP_MAX        (8 * TB)
 #define HIGH_ADDR_END       (HIGH_ADDR + PHYS_MAP_MAX)
+
+#define USER_STACK_VIRT 0x8000000000000000
+#define USER_STACK_SIZE (6 * MB)
+#define USER_STACK_BASE (USER_STACK_VIRT - USER_STACK_SIZE)
+#define USER_STACK_PAGES (USER_STACK_SIZE / PAGE_SIZE)
+
